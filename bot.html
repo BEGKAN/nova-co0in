@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>WC Casino</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #0a0f1e;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #eef2ff;
+            padding: 16px 12px 80px 12px;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #0f1425;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .page {
+            display: none;
+            padding: 20px 18px;
+            animation: fade 0.25s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fade {
+            from { opacity: 0; transform: translateY(8px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        .balance-card {
+            background: #1a1f33;
+            border-radius: 28px;
+            padding: 24px 20px;
+            margin-bottom: 24px;
+            border: 1px solid #2a2f45;
+        }
+
+        .balance-label {
+            font-size: 14px;
+            letter-spacing: 1px;
+            color: #8d93c0;
+            margin-bottom: 8px;
+        }
+
+        .balance-amount {
+            font-size: 48px;
+            font-weight: 800;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .balance-amount span {
+            font-size: 24px;
+            color: #b9c3ff;
+        }
+
+        .balance-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-outline {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #3a405e;
+            padding: 12px 0;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #cfd9ff;
+            flex: 1;
+            cursor: pointer;
+            text-align: center;
+            transition: 0.1s;
+        }
+
+        .btn-outline:active { background: #2e3452; transform: scale(0.97); }
+
+        .big-promo-btn {
+            background: linear-gradient(135deg, #2b3b6e, #1a2542);
+            border: none;
+            width: 100%;
+            padding: 18px 0;
+            border-radius: 60px;
+            font-size: 18px;
+            font-weight: 800;
+            color: #f5e77a;
+            margin: 16px 0 24px 0;
+            cursor: pointer;
+        }
+
+        .stats-row {
+            display: flex;
+            background: #13182b;
+            border-radius: 24px;
+            padding: 16px 18px;
+            border: 1px solid #242a44;
+            position: relative;
+        }
+
+        .stats-row::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 10%;
+            height: 80%;
+            width: 1px;
+            background: #2e3658;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #7a82b0;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .positive { color: #6feb8a; }
+        .negative { color: #ff7b6e; }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #0b0f1c;
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 18px 22px;
+            border-top: 1px solid #232842;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 28px 28px 0 0;
+            z-index: 20;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn svg {
+            width: 28px;
+            height: 28px;
+            stroke: #555e8a;
+            stroke-width: 1.5;
+            fill: none;
+            transition: all 0.2s;
+        }
+
+        .nav-btn.active {
+            background: #1e2748;
+        }
+
+        .nav-btn.active svg {
+            stroke: #cbd5ff;
+        }
+
+        .games-grid {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .game-card {
+            background: #131a30;
+            border-radius: 24px;
+            padding: 30px 20px;
+            width: 140px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid #2e3658;
+            transition: 0.1s;
+        }
+
+        .game-card:active { background: #1d2542; transform: scale(0.97); }
+
+        .game-icon svg {
+            width: 64px;
+            height: 64px;
+            stroke: #8d93c0;
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        .game-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 12px;
+        }
+
+        .bet-section {
+            background: #0c1122;
+            border-radius: 24px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .bet-label-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .quick-bet-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .quick-bet-btn {
+            background: #1a1f3a;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 40px;
+            color: #b9c3ff;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .bet-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .bet-input {
+            background: #1a1f35;
+            border: 1px solid #343b60;
+            padding: 12px 16px;
+            border-radius: 48px;
+            flex: 2;
+            font-size: 16px;
+            color: white;
+        }
+
+        .modifier-btn {
+            background: #2a3155;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .mines-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .mine-cell {
+            aspect-ratio: 1;
+            background: #1e2542;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .dice-container {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .dice-pair {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+        }
+
+        .dice {
+            font-size: 80px;
+            transition: transform 0.6s ease;
+        }
+
+        .dice-roll {
+            animation: roll 0.6s ease;
+        }
+
+        @keyframes roll {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.2); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
+        .primary-btn {
+            background: #2c3d6e;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 60px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: #11162a;
+            max-width: 320px;
+            width: 90%;
+            border-radius: 32px;
+            padding: 24px;
+        }
+
+        .hidden { display: none; }
+
+        .hash-display {
+            font-size: 10px;
+            background: #070b16;
+            padding: 8px;
+            border-radius: 12px;
+            margin-top: 12px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        select, input, textarea {
+            background: #1a1f35;
+            border: 1px solid #343b60;
+            padding: 10px;
+            border-radius: 40px;
+            color: white;
+            width: 100%;
+            margin: 8px 0;
+        }
+
+        .settings-item {
+            background: #0c1122;
+            padding: 15px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .settings-item:active { background: #1a1f3a; }
+        
+        .game-screen {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div id="profilePage" class="page active">
+        <div class="balance-card">
+            <div class="balance-label">ВАШ БАЛАНС WC</div>
+            <div class="balance-amount" id="balanceDisplay">0.00 <span>WC</span></div>
+            <div class="balance-actions">
+                <div class="btn-outline" id="depositBtn">Пополнить</div>
+                <div class="btn-outline" id="withdrawBtn">Вывести</div>
+            </div>
+        </div>
+        <button class="big-promo-btn" id="promoBtn">АКТИВАЦИЯ ПРОМОКОДА</button>
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-label">ПРОИГРАНО ЗА СЕГОДНЯ</div>
+                <div class="stat-value" id="todayLoss">0.00 WC</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">ТВОЙ + / -</div>
+                <div class="stat-value" id="totalProfit">0.00 WC</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="gamesPage" class="page">
+        <div class="games-grid">
+            <div class="game-card" data-game="mines">
+                <div class="game-icon"><svg viewBox="0 0 24 24" stroke="currentColor"><path d="M12 3L3 8l9 5 9-5-9-5zM3 16l9 5 9-5M3 12l9 5 9-5"/></svg></div>
+                <div class="game-title">МИНЫ</div>
+            </div>
+            <div class="game-card" data-game="dice">
+                <div class="game-icon"><svg viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.5"/><circle cx="16" cy="16" r="1.5"/><circle cx="8" cy="16" r="1.5"/><circle cx="16" cy="8" r="1.5"/><circle cx="12" cy="12" r="1.5"/></svg></div>
+                <div class="game-title">ПОД 7 НАД</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsPage" class="page">
+        <div class="settings-item" id="createPromoItem">
+            <strong>🎫 Создать промокод</strong>
+            <div style="font-size:12px;color:#8d93c0">Создать новый промокод для активации</div>
+        </div>
+        <div class="settings-item" id="termsItem">
+            <strong>📜 Пользовательское соглашение</strong>
+            <div style="font-size:12px;color:#8d93c0">Условия использования</div>
+        </div>
+        <div class="settings-item" id="resetStatsItem">
+            <strong>🔄 Сбросить статистику</strong>
+            <div style="font-size:12px;color:#8d93c0">Обнулить проигрыши и победы</div>
+        </div>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <button class="nav-btn" data-nav="profile"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+    <button class="nav-btn" data-nav="games"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M8 12h8M12 8v8"/></svg></button>
+    <button class="nav-btn" data-nav="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.04.04A10 10 0 0 0 12 17.66a10 10 0 0 0 6.36-2.62z"/><path d="M16.5 9.4a10 10 0 0 0-9-5.4 10 10 0 0 0-4.4 1"/></svg></button>
+</div>
+
+<!-- Модалки -->
+<div id="promoModal" class="modal hidden"><div class="modal-content"><h3>Активация промокода</h3><input type="text" id="promoCodeInput" placeholder="Введите промокод"><button id="submitPromo" class="primary-btn">Активировать</button><button id="closePromoModal" class="btn-outline">Закрыть</button></div></div>
+<div id="depositModal" class="modal hidden"><div class="modal-content"><h3>Пополнение WC</h3><p>Адрес для пополнения: <b>WC_${Math.random().toString(36).substring(7)}</b></p><button id="closeDepositModal" class="btn-outline">Закрыть</button></div></div>
+<div id="withdrawModal" class="modal hidden"><div class="modal-content"><h3>Вывод WC</h3><p>Вывод на привязанный World Coin кошелек</p><input type="number" id="withdrawAmount" placeholder="Сумма WC" min="10000"><button id="submitWithdraw" class="primary-btn">Вывести</button><button id="closeWithdrawModal" class="btn-outline">Отмена</button></div></div>
+<div id="createPromoModal" class="modal hidden"><div class="modal-content"><h3>Создать промокод</h3><input type="text" id="newPromoName" placeholder="Название промокода"><input type="number" id="promoAmount" placeholder="Сумма бонуса WC" value="100"><input type="number" id="promoActivations" placeholder="Количество активаций" value="1"><button id="createPromoBtn" class="primary-btn">Создать</button><button id="closeCreatePromoModal" class="btn-outline">Закрыть</button></div></div>
+<div id="termsModal" class="modal hidden"><div class="modal-content"><h3>Пользовательское соглашение</h3><p style="font-size:12px;text-align:left;max-height:300px;overflow:auto;">1. Минимальная ставка: 10,000 WC<br>2. Максимальная ставка: 100,000,000 WC<br>3. Вывод средств автоматический на привязанный World Coin кошелек<br>4. Промокод можно использовать 1 раз на аккаунт<br>5. Результаты игр честные, хешируются MD5<br>6. Администрация не несет ответственности<br>7. Играя, вы соглашаетесь с условиями</p><button id="closeTermsModal" class="btn-outline">Закрыть</button></div></div>
+
+<script>
+    // БАЗА ДАННЫХ (localStorage)
+    class Database {
+        constructor(userId) {
+            this.userId = userId;
+            this.dbKey = `wc_db_${userId}`;
+            this.init();
+        }
+        
+        init() {
+            if(!localStorage.getItem(this.dbKey)) {
+                const defaultData = {
+                    balance: 100000,
+                    totalProfit: 0,
+                    todayLoss: 0,
+                    lastDayReset: new Date().toDateString(),
+                    usedPromos: [],
+                    stats: { gamesPlayed: 0, minesWins: 0, diceWins: 0 }
+                };
+                localStorage.setItem(this.dbKey, JSON.stringify(defaultData));
+            }
+        }
+        
+        getData() {
+            return JSON.parse(localStorage.getItem(this.dbKey));
+        }
+        
+        saveData(data) {
+            localStorage.setItem(this.dbKey, JSON.stringify(data));
+        }
+        
+        updateBalance(amount) {
+            const data = this.getData();
+            data.balance += amount;
+            this.saveData(data);
+            return data.balance;
+        }
+        
+        addProfit(amount) {
+            const data = this.getData();
+            data.totalProfit += amount;
+            this.saveData(data);
+        }
+        
+        addLoss(amount) {
+            const data = this.getData();
+            data.todayLoss += amount;
+            data.totalProfit -= amount;
+            this.saveData(data);
+        }
+        
+        resetDailyIfNeeded() {
+            const data = this.getData();
+            const today = new Date().toDateString();
+            if(data.lastDayReset !== today) {
+                data.todayLoss = 0;
+                data.lastDayReset = today;
+                this.saveData(data);
+            }
+        }
+        
+        usePromo(code) {
+            const data = this.getData();
+            if(data.usedPromos.includes(code)) return false;
+            data.usedPromos.push(code);
+            this.saveData(data);
+            return true;
+        }
+        
+        hasUsedPromo(code) {
+            const data = this.getData();
+            return data.usedPromos.includes(code);
+        }
+        
+        resetStats() {
+            const data = this.getData();
+            data.totalProfit = 0;
+            data.todayLoss = 0;
+            data.stats = { gamesPlayed: 0, minesWins: 0, diceWins: 0 };
+            this.saveData(data);
+        }
+        
+        getBalance() {
+            return this.getData().balance;
+        }
+        
+        getStats() {
+            const data = this.getData();
+            return { totalProfit: data.totalProfit, todayLoss: data.todayLoss };
+        }
+    }
+    
+    // Промокоды (глобальная БД)
+    class PromoDatabase {
+        constructor() {
+            this.promoKey = 'wc_promocodes_global';
+            if(!localStorage.getItem(this.promoKey)) {
+                localStorage.setItem(this.promoKey, JSON.stringify({}));
+            }
+        }
+        
+        getAll() {
+            return JSON.parse(localStorage.getItem(this.promoKey));
+        }
+        
+        create(code, amount, usesLeft) {
+            const promos = this.getAll();
+            if(promos[code]) return false;
+            promos[code] = { amount, usesLeft, created: Date.now() };
+            localStorage.setItem(this.promoKey, JSON.stringify(promos));
+            return true;
+        }
+        
+        use(code) {
+            const promos = this.getAll();
+            if(!promos[code] || promos[code].usesLeft <= 0) return null;
+            promos[code].usesLeft--;
+            localStorage.setItem(this.promoKey, JSON.stringify(promos));
+            return promos[code].amount;
+        }
+        
+        exists(code) {
+            const promos = this.getAll();
+            return promos[code] && promos[code].usesLeft > 0;
+        }
+    }
+    
+    // Инициализация
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    const userId = tg.initDataUnsafe?.user?.id ? tg.initDataUnsafe.user.id.toString() : 'user_' + Math.floor(Math.random() * 100000);
+    
+    const db = new Database(userId);
+    const promoDB = new PromoDatabase();
+    
+    const MIN_BET = 10000;
+    const MAX_BET = 100000000;
+    
+    let currentGameHash = null;
+    
+    // Обновление UI
+    function updateUI() {
+        db.resetDailyIfNeeded();
+        const balance = db.getBalance();
+        const stats = db.getStats();
+        document.getElementById('balanceDisplay').innerHTML = balance.toLocaleString() + ' <span>WC</span>';
+        document.getElementById('todayLoss').innerText = stats.todayLoss.toLocaleString() + ' WC';
+        const profitElem = document.getElementById('totalProfit');
+        const profit = stats.totalProfit;
+        profitElem.innerText = (profit >= 0 ? '+' : '') + profit.toLocaleString() + ' WC';
+        profitElem.className = profit >= 0 ? 'stat-value positive' : 'stat-value negative';
+    }
+    
+    function updateBalanceOnly() {
+        document.getElementById('balanceDisplay').innerHTML = db.getBalance().toLocaleString() + ' <span>WC</span>';
+    }
+    
+    // Игра МИНЫ
+    let minesGameActive = false;
+    let minesRevealed = [];
+    let minesPositions = [];
+    let minesCount = 3;
+    let currentBetAmount = 0;
+    
+    function renderMinesGame() {
+        const container = document.getElementById('dynamicGameContainer');
+        if(!container) return;
+        currentGameHash = CryptoJS.MD5('mines_' + userId + Date.now()).toString();
+        container.innerHTML = `
+            <button class="btn-outline" id="backToGames" style="margin-bottom:12px;">← Назад к играм</button>
+            <div class="game-screen">
+                <h2 style="margin-bottom:16px;">💣 МИНЫ 5x5</h2>
+                <div class="mines-config" style="display:flex;gap:12px;margin-bottom:16px;">
+                    <select id="minesCountSelect">
+                        <option value="3">3 мины (x2.5)</option>
+                        <option value="5">5 мин (x3.5)</option>
+                        <option value="8">8 мин (x5.0)</option>
+                        <option value="12">12 мин (x8.0)</option>
+                    </select>
+                </div>
+                <div class="bet-section">
+                    <div class="bet-label-row"><span>💰 Ваша ставка (мин ${MIN_BET.toLocaleString()} WC)</span><span id="currentBetDisplay">0 WC</span></div>
+                    <div class="quick-bet-buttons">
+                        <button class="quick-bet-btn" data-add="10000">+10K</button>
+                        <button class="quick-bet-btn" data-add="100000">+100K</button>
+                        <button class="quick-bet-btn" data-add="1000000">+1M</button>
+                        <button class="quick-bet-btn" data-add="10000000">+10M</button>
+                        <button class="quick-bet-btn" data-add="50000000">+50M</button>
+                    </div>
+                    <div class="bet-controls">
+                        <input type="number" id="betAmount" class="bet-input" placeholder="Сумма ставки" value="10000">
+                        <div class="bet-modifier"><button class="modifier-btn" id="halveBet">/2</button><button class="modifier-btn" id="doubleBet">x2</button></div>
+                    </div>
+                    <button id="startMinesGame" class="primary-btn" style="width:100%;margin-top:12px;">🎲 Начать игру</button>
+                </div>
+                <div id="minesGrid" class="mines-grid"></div>
+                <div id="minesStatus"></div>
+                <div class="hash-display">🔒 Хеш раунда: ${currentGameHash.substring(0,16)}...</div>
+            </div>
+        `;
+        attachMinesEvents();
+    }
+    
+    function attachMinesEvents() {
+        document.getElementById('backToGames').onclick = () => {
+            document.getElementById('dynamicGameContainer').innerHTML = '';
+            setActiveNav('games');
+        };
+        document.querySelectorAll('.quick-bet-btn').forEach(btn => {
+            btn.onclick = () => {
+                let inp = document.getElementById('betAmount');
+                let add = parseFloat(btn.dataset.add);
+                let newVal = (parseFloat(inp.value) || 0) + add;
+                if(newVal > MAX_BET) newVal = MAX_BET;
+                inp.value = newVal;
+                updateBetDisplay();
+            };
+        });
+        document.getElementById('halveBet').onclick = () => {
+            let inp = document.getElementById('betAmount');
+            let newVal = (parseFloat(inp.value) || 0) / 2;
+            if(newVal < MIN_BET && newVal > 0) newVal = MIN_BET;
+            inp.value = Math.max(MIN_BET, newVal);
+            updateBetDisplay();
+        };
+        document.getElementById('doubleBet').onclick = () => {
+            let inp = document.getElementById('betAmount');
+            let newVal = (parseFloat(inp.value) || 0) * 2;
+            if(newVal > MAX_BET) newVal = MAX_BET;
+            inp.value = newVal;
+            updateBetDisplay();
+        };
+        document.getElementById('betAmount').addEventListener('input', updateBetDisplay);
+        document.getElementById('startMinesGame').addEventListener('click', startMinesRound);
+        updateBetDisplay();
+    }
+    
+    function updateBetDisplay() {
+        let bet = parseFloat(document.getElementById('betAmount')?.value) || 0;
+        if(bet > MAX_BET) bet = MAX_BET;
+        if(bet < MIN_BET && bet > 0) bet = MIN_BET;
+        document.getElementById('currentBetDisplay').innerText = bet.toLocaleString() + ' WC';
+    }
+    
+    function getMinesMultiplier(mines) {
+        const multipliers = {3: 2.5, 5: 3.5, 8: 5.0, 12: 8.0};
+        return multipliers[mines] || 2.5;
+    }
+    
+    function startMinesRound() {
+        let bet = parseFloat(document.getElementById('betAmount').value);
+        if(isNaN(bet) || bet < MIN_BET) {
+            tg.showAlert(`Минимальная ставка ${MIN_BET.toLocaleString()} WC`);
+            return;
+        }
+        if(bet > MAX_BET) {
+            tg.showAlert(`Максимальная ставка ${MAX_BET.toLocaleString()} WC`);
+            return;
+        }
+        if(bet > db.getBalance()) {
+            tg.showAlert('Недостаточно средств');
+            return;
+        }
+        
+        minesCount = parseInt(document.getElementById('minesCountSelect').value);
+        currentBetAmount = bet;
+        
+        db.updateBalance(-bet);
+        updateBalanceOnly();
+        
+        minesPositions = [];
+        while(minesPositions.length < minesCount) {
+            const pos = Math.floor(Math.random() * 25);
+            if(!minesPositions.includes(pos)) minesPositions.push(pos);
+        }
+        minesRevealed = new Array(25).fill(false);
+        minesGameActive = true;
+        renderMinesField();
+        document.getElementById('minesStatus').innerHTML = `🎮 Игра началась! Мин: ${minesCount}, ставка: ${bet.toLocaleString()} WC. Находите безопасные ячейки!`;
+    }
+    
+    function renderMinesField() {
+        const grid = document.getElementById('minesGrid');
+        if(!grid) return;
+        grid.innerHTML = '';
+        for(let i = 0; i < 25; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'mine-cell';
+            if(minesRevealed[i]) {
+                if(minesPositions.includes(i)) cell.innerText = '💣';
+                else cell.innerText = '💎';
+                cell.style.background = minesPositions.includes(i) ? '#6b2e2e' : '#2e6b3e';
+            } else {
+                cell.innerText = '?';
+            }
+            if(!minesRevealed[i] && minesGameActive) {
+                cell.onclick = () => revealCell(i);
+            }
+            grid.appendChild(cell);
+        }
+    }
+    
+    function revealCell(idx) {
+        if(!minesGameActive || minesRevealed[idx]) return;
+        minesRevealed[idx] = true;
+        
+        if(minesPositions.includes(idx)) {
+            minesGameActive = false;
+            db.addLoss(currentBetAmount);
+            updateUI();
+            document.getElementById('minesStatus').innerHTML = `💥 МИНА! Проигрыш ${currentBetAmount.toLocaleString()} WC`;
+            renderMinesField();
+        } else {
+            const safeCells = minesRevealed.filter((v, i) => !minesPositions.includes(i) && v).length;
+            const totalSafe = 25 - minesCount;
+            
+            if(safeCells === totalSafe) {
+                const multiplier = getMinesMultiplier(minesCount);
+                const winAmount = currentBetAmount * multiplier;
+                db.updateBalance(winAmount);
+                db.addProfit(winAmount - currentBetAmount);
+                updateUI();
+                document.getElementById('minesStatus').innerHTML = `🏆 ПОБЕДА! Выигрыш ${winAmount.toLocaleString()} WC (x${multiplier})!`;
+                minesGameActive = false;
+                renderMinesField();
+            } else {
+                renderMinesField();
+                document.getElementById('minesStatus').innerHTML = `✅ Безопасно! Найдено ${safeCells}/${totalSafe} безопасных ячеек.`;
+            }
+        }
+        updateBalanceOnly();
+    }
+    
+    // Игра ПОД 7 НАД
+    function renderDiceGame() {
+        const container = document.getElementById('dynamicGameContainer');
+        if(!container) return;
+        currentGameHash = CryptoJS.MD5('dice_' + userId + Date.now()).toString();
+        container.innerHTML = `
+            <button class="btn-outline" id="backToGames2" style="margin-bottom:12px;">← Назад к играм</button>
+            <div class="game-screen">
+                <h2 style="margin-bottom:16px;">🎲 ПОД 7 НАД</h2>
+                <div class="bet-section">
+                    <div class="bet-label-row"><span>💰 Ваша ставка</span><span id="currentBetDisplay2">0 WC</span></div>
+                    <div class="quick-bet-buttons">
+                        <button class="quick-bet-btn" data-add="10000">+10K</button>
+                        <button class="quick-bet-btn" data-add="100000">+100K</button>
+                        <button class="quick-bet-btn" data-add="1000000">+1M</button>
+                        <button class="quick-bet-btn" data-add="10000000">+10M</button>
+                        <button class="quick-bet-btn" data-add="50000000">+50M</button>
+                    </div>
+                    <div class="bet-controls">
+                        <input type="number" id="betAmountN" class="bet-input" placeholder="Сумма ставки" value="10000">
+                        <div class="bet-modifier"><button class="modifier-btn" id="halveBetN">/2</button><button class="modifier-btn" id="doubleBetN">x2</button></div>
+                    </div>
+                </div>
+                <div class="dice-container">
+                    <div class="dice-pair">
+                        <div class="dice" id="dice1">⚀</div>
+                        <div class="dice" id="dice2">⚀</div>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:16px 0;">
+                        <button id="betLow" class="primary-btn">⬇️ МЕНЬШЕ 7 (x2.3)</button>
+                        <button id="betSeven" class="primary-btn">🎯 РОВНО 7 (x5.8)</button>
+                        <button id="betHigh" class="primary-btn">⬆️ БОЛЬШЕ 7 (x2.3)</button>
+                    </div>
+                    <div id="diceStatus"></div>
+                </div>
+                <div class="hash-display">🔒 Хеш раунда: ${currentGameHash.substring(0,16)}...</div>
+            </div>
+        `;
+        attachDiceEvents();
+    }
+    
+    function attachDiceEvents() {
+        document.getElementById('backToGames2').onclick = () => {
+            document.getElementById('dynamicGameContainer').innerHTML = '';
+            setActiveNav('games');
+        };
+        document.querySelectorAll('#dynamicGameContainer .quick-bet-btn').forEach(btn => {
+            btn.onclick = () => {
+                let inp = document.getElementById('betAmountN');
+                let add = parseFloat(btn.dataset.add);
+                let newVal = (parseFloat(inp.value) || 0) + add;
+                if(newVal > MAX_BET) newVal = MAX_BET;
+                inp.value = newVal;
+                updateBetDisplayN();
+            };
+        });
+        document.getElementById('halveBetN').onclick = () => {
+            let inp = document.getElementById('betAmountN');
+            let newVal = (parseFloat(inp.value) || 0) / 2;
+            if(newVal < MIN_BET && newVal > 0) newVal = MIN_BET;
+            inp.value = Math.max(MIN_BET, newVal);
+            updateBetDisplayN();
+        };
+        document.getElementById('doubleBetN').onclick = () => {
+            let inp = document.getElementById('betAmountN');
+            let newVal = (parseFloat(inp.value) || 0) * 2;
+            if(newVal > MAX_BET) newVal = MAX_BET;
+            inp.value = newVal;
+            updateBetDisplayN();
+        };
+        document.getElementById('betAmountN').addEventListener('input', updateBetDisplayN);
+        document.getElementById('betLow').onclick = () => makeDiceBet('low');
+        document.getElementById('betSeven').onclick = () => makeDiceBet('seven');
+        document.getElementById('betHigh').onclick = () => makeDiceBet('high');
+        updateBetDisplayN();
+    }
+    
+    function updateBetDisplayN() {
+        let bet = parseFloat(document.getElementById('betAmountN')?.value) || 0;
+        if(bet > MAX_BET) bet = MAX_BET;
+        if(bet < MIN_BET && bet > 0) bet = MIN_BET;
+        document.getElementById('currentBetDisplay2').innerText = bet.toLocaleString() + ' WC';
+    }
+    
+    function rollDice() {
+        return {
+            d1: Math.floor(Math.random() * 6) + 1,
+            d2: Math.floor(Math.random() * 6) + 1,
+            sum: function() { return this.d1 + this.d2; }
+        };
+    }
+    
+    function animateDice(d1, d2) {
+        const map = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+        const d1el = document.getElementById('dice1');
+        const d2el = document.getElementById('dice2');
+        d1el.classList.add('dice-roll');
+        d2el.classList.add('dice-roll');
+        setTimeout(() => {
+            d1el.innerText = map[d1 - 1];
+            d2el.innerText = map[d2 - 1];
+            d1el.classList.remove('dice-roll');
+            d2el.classList.remove('dice-roll');
+        }, 300);
+    }
+    
+    function makeDiceBet(type) {
+        let bet = parseFloat(document.getElementById('betAmountN').value);
+        if(isNaN(bet) || bet < MIN_BET) {
+            tg.showAlert(`Минимальная ставка ${MIN_BET.toLocaleString()} WC`);
+            return;
+        }
+        if(bet > MAX_BET) {
+            tg.showAlert(`Максимальная ставка ${MAX_BET.toLocaleString()} WC`);
+            return;
+        }
+        if(bet > db.getBalance()) {
+            tg.showAlert('Недостаточно средств');
+            return;
+        }
+        
+        db.updateBalance(-bet);
+        updateBalanceOnly();
+        
+        const d1 = Math.floor(Math.random() * 6) + 1;
+        const d2 = Math.floor(Math.random() * 6) + 1;
+        const sum = d1 + d2;
+        animateDice(d1, d2);
+        
+        let multiplier = 0;
+        let win = false;
+        
+        if(type === 'low' && sum < 7) { multiplier = 2.3; win = true; }
+        else if(type === 'seven' && sum === 7) { multiplier = 5.8; win = true; }
+        else if(type === 'high' && sum > 7) { multiplier = 2.3; win = true; }
+        
+        setTimeout(() => {
+            if(win) {
+                const winAmount = bet * multiplier;
+                db.updateBalance(winAmount);
+                db.addProfit(winAmount - bet);
+                document.getElementById('diceStatus').innerHTML = `🎉 ВЫИГРЫШ! +${winAmount.toLocaleString()} WC (сумма ${sum}, x${multiplier})!`;
+            } else {
+                db.addLoss(bet);
+                document.getElementById('diceStatus').innerHTML = `😞 ПРОИГРЫШ! -${bet.toLocaleString()} WC (сумма ${sum})`;
+            }
+            updateUI();
+        }, 400);
+    }
+    
+    // Промокоды
+    function activatePromo(code) {
+        if(db.hasUsedPromo(code)) {
+            tg.showAlert('❌ Промокод уже использован');
+            return false;
+        }
+        const amount = promoDB.use(code);
+        if(amount) {
+            db.updateBalance(amount);
+            db.usePromo(code);
+            updateUI();
+            tg.showAlert(`✅ Промокод активирован! +${amount.toLocaleString()} WC`);
+            return true;
+        }
+        tg.showAlert('❌ Недействительный промокод');
+        return false;
+    }
+    
+    function createPromo(name, amount, uses) {
+        if(promoDB.create(name, amount, uses)) {
+            tg.showAlert(`✅ Промокод "${name}" создан! Бонус: ${amount.toLocaleString()} WC (${uses} использований)`);
+            return true;
+        }
+        tg.showAlert('❌ Промокод с таким именем уже существует');
+        return false;
+    }
+    
+    // Навигация
+    function setActiveNav(pageId) {
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.querySelector(`[data-nav="${pageId}"]`);
+        if(activeBtn) activeBtn.classList.add('active');
+        
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        const activePage = document.getElementById(`${pageId}Page`);
+        if(activePage) activePage.classList.add('active');
+        
+        const container = document.getElementById('dynamicGameContainer');
+        if(container) container.innerHTML = '';
+    }
+    
+    // Инициализация
+    function init() {
+        const container = document.createElement('div');
+        container.id = 'dynamicGameContainer';
+        document.querySelector('.app-container').appendChild(container);
+        
+        updateUI();
+        
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.onclick = () => setActiveNav(btn.dataset.nav);
+        });
+        
+        const gameCards = document.querySelectorAll('.game-card');
+        gameCards.forEach(card => {
+            card.onclick = (e) => {
+                e.stopPropagation();
+                const game = card.dataset.game;
+                if(game === 'mines') {
+                    renderMinesGame();
+                } else if(game === 'dice') {
+                    renderDiceGame();
+                }
+                setActiveNav('games');
+            };
+        });
+        
+        document.getElementById('promoBtn').onclick = () => document.getElementById('promoModal').classList.remove('hidden');
+        document.getElementById('closePromoModal').onclick = () => document.getElementById('promoModal').classList.add('hidden');
+        document.getElementById('submitPromo').onclick = () => {
+            const code = document.getElementById('promoCodeInput').value;
+            if(code) activatePromo(code);
+            document.getElementById('promoModal').classList.add('hidden');
+            document.getElementById('promoCodeInput').value = '';
+        };
+        
+        document.getElementById('depositBtn').onclick = () => document.getElementById('depositModal').classList.remove('hidden');
+        document.getElementById('closeDepositModal').onclick = () => document.getElementById('depositModal').classList.add('hidden');
+        
+        document.getElementById('withdrawBtn').onclick = () => document.getElementById('withdrawModal').classList.remove('hidden');
+        document.getElementById('closeWithdrawModal').onclick = () => document.getElementById('withdrawModal').classList.add('hidden');
+        document.getElementById('submitWithdraw').onclick = () => {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            if(amount >= MIN_BET && amount <= db.getBalance()) {
+                db.updateBalance(-amount);
+                updateUI();
+                tg.showAlert(`✅ Вывод ${amount.toLocaleString()} WC на World Coin кошелек выполнен!`);
+            } else {
+                tg.showAlert('❌ Неверная сумма вывода');
+            }
+            document.getElementById('withdrawModal').classList.add('hidden');
+            document.getElementById('withdrawAmount').value = '';
+        };
+        
+        document.getElementById('createPromoItem').onclick = () => document.getElementById('createPromoModal').classList.remove('hidden');
+        document.getElementById('closeCreatePromoModal').onclick = () => document.getElementById('createPromoModal').classList.add('hidden');
+        document.getElementById('createPromoBtn').onclick = () => {
+            const name = document.getElementById('newPromoName').value;
+            const amount = parseFloat(document.getElementById('promoAmount').value);
+            const uses = parseInt(document.getElementById('promoActivations').value);
+            if(name && amount > 0 && uses > 0) {
+                createPromo(name, amount, uses);
+            } else {
+                tg.showAlert('Заполните все поля');
+            }
+            document.getElementById('createPromoModal').classList.add('hidden');
+        };
+        
+        document.getElementById('termsItem').onclick = () => document.getElementById('termsModal').classList.remove('hidden');
+        document.getElementById('closeTermsModal').onclick = () => document.getElementById('termsModal').classList.add('hidden');
+        
+        document.getElementById('resetStatsItem').onclick = () => {
+            if(confirm('Сбросить всю статистику?')) {
+                db.resetStats();
+                updateUI();
+                tg.showAlert('Статистика сброшена');
+            }
+        };
+        
+        setActiveNav('profile');
+    }
+    
+    init();
+</script>
+</body>
+</html>
